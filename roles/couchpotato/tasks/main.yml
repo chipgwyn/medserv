@@ -1,0 +1,30 @@
+---
+# file: roles/couchpotato/tasks/main.yml
+
+- name: Install couchpotato files
+  git:
+    repo: https://github.com/CouchPotato/CouchPotatoServer.git
+    dest: /opt/couchpotato
+    clone: yes
+    update: no
+
+- name: Copy over init script
+  copy:
+    remote_src: True
+    src: /opt/couchpotato/init/ubuntu
+    dest: /etc/init.d/couchpotato
+    group: root
+    owner: root
+    mode: 0755
+  notify: restart couchpotato
+
+- name: Copy up the default deamon config
+  template:
+    src: couchpotato.default.j2
+    dest: /etc/default/couchpotato
+  notify: restart couchpotato
+
+- name: Set CouchPotato to begin on startup
+  command: update-rc.d couchpotato defaults creates=/etc/rc0.d/K01couchpotato
+  notify: restart couchpotato
+

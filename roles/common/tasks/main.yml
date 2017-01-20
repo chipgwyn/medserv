@@ -1,0 +1,57 @@
+---
+# file: roles/common/tasks/main.yml
+
+- name: Update APT Cache
+  apt: update_cache=yes cache_valid_time=86400
+
+- name: Add Main Media Server group
+  group:
+    name: "{{ ms_user }}"
+    state: present
+
+- name: Setup Main Media Server User
+  user:
+    name: "{{ ms_user }}"
+    group: "{{ ms_user }}"
+    groups: sudo,adm
+    #append: yes
+    createhome: yes
+    password: "{{ ms_pass }}"
+    shell: /bin/bash
+    state: present
+
+- name: Create User Dirs
+  file:
+    path: /home/{{ ms_user }}/{{ item }}
+    group: "{{ ms_user }}"
+    owner: "{{ ms_user }}"
+    mode: 0775
+    state: directory
+    
+  with_items:
+    - bin
+    - dl
+    - .ssh
+
+- name: Setup NTP Client
+  apt: name=ntp state=present
+  notify: 
+  - restart ntp
+
+- name: Install Common Tools
+  apt: name={{ item }} state=present
+  with_items:
+    - curl
+    - wget
+    - mtr-tiny
+    - traceroute
+    - tmux
+    - whois
+    - software-properties-common
+    - python-pip
+    - htop
+    - git-core
+    - python-openssl
+    - p7zip-full
+    - par2
+    

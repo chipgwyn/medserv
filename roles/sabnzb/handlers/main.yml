@@ -1,0 +1,5 @@
+---
+# file: roles/sabnzb/handlers/main.yml
+
+- name: restart sabnzbdplus
+  service: name=sabnzbdplus state=restarted

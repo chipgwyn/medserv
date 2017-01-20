@@ -1,0 +1,64 @@
+---
+# file: roles/headphones/tasks/main.yml
+
+- name: Clone headpones git repo
+  git:
+    repo: https://github.com/rembo10/headphones.git
+    dest: /opt/headphones
+    clone: yes
+    update: no
+
+- name: Create init startup script
+  copy:
+    remote_src: True
+    src: /opt/headphones/init-scripts/init.ubuntu
+    dest: /etc/init.d/headphones
+    group: root
+    owner: root
+    mode: 0755
+  notify: restart headphones
+
+- name: Create init defaults
+  template:
+    src: headphones.default.j2
+    dest: /etc/default/headphones
+  notify: restart headphones
+
+- name: Set headphones to begin on startup
+  command: update-rc.d headphones defaults creates=/etc/rc0.d/K01headphones
+  notify: restart headphones
+
+- name: Set headphones to list on all interfaces
+  ini_file:
+    dest: /opt/headphones/config.ini
+    section: General
+    option: "{{ item }}"
+    value: '0.0.0.0'
+  with_items:
+    - customhost
+    - http_host
+
+- name: Set headphones to list on pop 8181
+  ini_file:
+    dest: /opt/headphones/config.ini
+    section: General
+    option: http_port
+    value: 8181
+
+- name: Set directory to put music
+  ini_file:
+    dest: /opt/headphones/config.ini
+    section: General
+    option: "{{ item }}"
+    value: /mediaserver/media/music
+  with_items:
+    - destination_dir
+    - music_dir
+
+- name: Set download dir
+  ini_file:
+    dest: /opt/headphones/config.ini
+    section: General
+    option: download_dir
+    value: /mediaserver/downloads/completed
+

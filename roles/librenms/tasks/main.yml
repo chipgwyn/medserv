@@ -1,0 +1,166 @@
+---
+# file: roles/librenms/tasks/main.yml
+
+- name: Install Packages
+  apt: name={{ item }} state=present
+  with_items:
+    - mariadb-server 
+    - mariadb-client
+    - php7.0-cli
+    - php7.0-mysql
+    - php7.0-gd
+    - php7.0-snmp
+    - php-pear
+    - php7.0-curl
+    - php7.0-fpm
+    - snmp
+    - graphviz
+    - php7.0-mcrypt
+    - php7.0-json
+    - nginx-full
+    - fping
+    - imagemagick
+    - whois
+    - mtr-tiny
+    - nmap
+    - python-mysqldb
+    - snmpd
+    - php-net-ipv4
+    - php-net-ipv6
+    - rrdtool
+    - git
+
+- name: Configure mariadb innodb
+  lineinfile: 
+    dest: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: ^innodb_file_per_table
+    line: innodb_file_per_table=1
+  notify: restart mysql
+
+- name: Configure mariadb innodb strict mode
+  lineinfile: 
+    dest: /etc/mysql/mariadb.conf.d/50-server.cnf
+    regexp: ^sql-mode
+    line: sql-mode=""
+  notify: restart mysql
+
+- name: Set PHP FPM Timezone
+  lineinfile:
+    dest: /etc/php/7.0/fpm/php.ini
+    regexp: ^date.timezone
+    line: date.timezone = "America/New_York"
+  notify: restart php-fpm
+
+- name: Set PHP Timezone
+  lineinfile:
+    dest: /etc/php/7.0/cli/php.ini
+    regexp: ^date.timezone
+    line: date.timezone = "America/New_York"
+  notify: restart php-fpm
+
+- name: Enable PHP mcrypt
+  file:
+    dest: /etc/php/7.0/{{ item }}/conf.d/20-mcrypt.ini
+    src: /etc/php/7.0/mods-available/mcrypt.ini
+    state: link
+  with_items:
+    - cli
+    - fpm
+  notify: restart php-fpm
+
+- name: Create librenms group
+  group: name=librenms state=present
+
+- name: Create librenms user
+  user:
+    name: librenms
+    group: librenms
+    groups: www-data
+    home: /opt/librenms
+    state: present
+
+- name: Add www-data to librenms group
+  user:
+    name: www-data
+    groups: librenms
+    append: yes
+    state: present
+
+- name: Clone librenms git repo
+  git:
+    repo: https://github.com/librenms/librenms.git
+    dest: /opt/librenms/app
+    clone: yes
+    update: no
+
+- name: Set librenms app root dir permissions
+  file:
+    owner: librenms
+    group: librenms
+    recurse: yes
+    state: directory
+    dest: /opt/librenms/app
+
+- name: Make RRD & Logs dir
+  file:
+    dest: /var/lib/librenms/{{ item }}
+    mode: 0775
+    owner: librenms
+    group: www-data
+    state: directory
+  with_items:
+    - logs
+    - rrd
+
+- name: Create RRD & Logs links
+  file:
+    state: link
+    src: /var/lib/librenms/{{ item }}
+    dest: /opt/librenms/app/{{ item }}
+  with_items:
+    - logs
+    - rrd    
+
+- name: Create Nginx Config
+  template:
+    src: librenms.conf.j2
+    dest: /etc/nginx/conf.d/librenms.conf
+  notify:
+    - restart nginx
+
+- name: Create librenms database
+  mysql_db: name=librenms state=present
+  
+- name: Create librenms database user
+  mysql_user: 
+    name: librenms
+    password: librenms
+    priv: librenms.*:ALL
+    host: 'localhost'
+    state: present
+
+- name: Copy up snmpd config
+  copy:
+    src: snmpd.conf
+    dest: /etc/snmp/snmpd.conf
+    owner: root
+    group: root
+    mode: 0640
+  notify: restart snmpd
+
+- name: Create librenms cron jobs
+  copy:
+    src: librenms.cron
+    dest: /etc/cron.d/librenms
+
+- name: Copy up librenms config file
+  copy:
+    src: config.php
+    dest: /opt/librenms/app/config.php
+    
+
+
+
+
+
+

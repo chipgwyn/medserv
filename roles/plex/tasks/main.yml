@@ -1,0 +1,24 @@
+---
+# file: roles/plex/tasks/main.yml
+
+- name: Copy Plex Server Package Up
+  copy:
+    src: "{{ plex_package_file }}"
+    dest: /home/{{ ms_user }}/dl/
+
+- name: Install Plex Package
+  apt: 
+    deb: /home/{{ ms_user }}/dl/{{ plex_package_file }}
+
+- name: Create Plex Library Directories
+  file:
+    path: /mediaserver/{{ item }}
+    group: "{{ ms_user }}"
+    owner: "{{ ms_user }}"
+    mode: 0775
+    state: directory
+  with_items:
+    - media/tv
+    - media/music
+    - media/movies
+    - media/photos

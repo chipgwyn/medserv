@@ -1,0 +1,5 @@
+---
+# file: roles/couchpotato/handlers/main.yml
+
+- name: restart couchpotato
+  service: name=couchpotato state=restarted

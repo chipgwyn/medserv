@@ -1,0 +1,5 @@
+---
+# file: roles/sonarr/handlers/main.yml
+
+- name: restart nzbdrone
+  service: name=nzbdrone state=restarted

@@ -1,0 +1,24 @@
+## nginx config for ansible
+server {
+ listen      80;
+ server_name {{ ansible_fqdn }};
+ root        /opt/librenms/app/html;
+ index       index.php;
+ access_log  /opt/librenms/app/logs/access_log;
+ error_log   /opt/librenms/app/logs/error_log;
+ location / {
+  try_files $uri $uri/ @librenms;
+ }
+ location ~ \.php {
+  include fastcgi.conf;
+  fastcgi_split_path_info ^(.+\.php)(/.+)$;
+  fastcgi_pass unix:/var/run/php/php7.0-fpm.sock;
+ }
+ location ~ /\.ht {
+  deny all;
+ }
+ location @librenms {
+  rewrite api/v0(.*)$ /api_v0.php/$1 last;
+  rewrite ^(.+)$ /index.php/$1 last;
+ }
+}

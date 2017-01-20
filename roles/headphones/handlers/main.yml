@@ -1,0 +1,5 @@
+---
+# file: roles/headphones/handlers.yml
+
+- name: restart headphones
+  service: name=headphone state=restarted

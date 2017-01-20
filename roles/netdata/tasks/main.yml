@@ -1,0 +1,57 @@
+---
+# file: roles/netdata/tasks/main.yml
+
+- name: Install dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - zlib1g-dev
+    - uuid-dev
+    - libmnl-dev
+    - gcc
+    - make
+    - git
+    - autoconf
+    - autoconf-archive
+    - autogen
+    - automake
+    - pkg-config
+    - curl
+    - jq
+    - python-mysqldb
+    - python-yaml
+    - python3-pip
+    - python3-yaml
+    - python3-mysqldb
+    - python3
+    - traceroute
+
+- name: clone github repo
+  git:
+    repo: https://github.com/firehol/netdata.git
+    depth: 1
+    clone: yes
+    update: no
+    dest: /var/tmp/netdata-install
+
+- name: run netdata installer
+  command: /var/tmp/netdata-install/netdata-installer.sh
+  args:
+    chdir: /var/tmp/netdata-install
+    creates: /etc/netdata/netdata.conf
+
+- name: copy netdata startup script
+  copy:
+    remote_src: True
+    src: /var/tmp/netdata-install/system/netdata.service
+    dest: /etc/systemd/system/netdata.service
+
+- name: set netdata to start on boot
+  command: "{{ item }}"
+  args:
+    creates: /etc/systemd/system/multi-user.target.wants/netdata.service
+  with_items:
+    - systemctl daemon-reload
+    - systemctl enable netdata
+  notify: restart netdata

@@ -1,0 +1,24 @@
+---
+# file: groupvars/medserv/main.yml
+
+ms_user: medserv
+ms_pass: "$6$stztdWow$ZS7QSqkP5EUAFcWvCnUZCoqLEdh7iMUI/YQ932k5ktim3S3bkCyffV05TM5XUsGhP8UfsFhijz2SB7sHHmvGL."
+
+plex_package_file: plexmediaserver_1.3.3.3148-b38628e_amd64.deb
+
+sabnzb: {
+  dl_temp: /mediaserver/downloads/temp,
+  dl_complete: /mediaserver/downloads/completed,
+  dl_staged: /mediaserver/downloads/staged,
+  web_port: 9092,
+  https_port: 9090,
+}
+
+news_servers: {
+  newshosting: {
+      server_name: news.newshosting.com,
+      username: USERNAME,
+      connections: 10,
+      password: PASSWORD
+  } 
+}

@@ -1,0 +1,60 @@
+---
+# file: roles/sonarr/tasks/main.yml
+
+- name: Add Mono apt key
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
+    state: present
+
+- name: Add Mono Repositories
+  apt_repository:
+    repo: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - deb http://download.mono-project.com/repo/debian wheezy main
+    - deb http://download.mono-project.com/repo/debian wheezy-apache24-compat main
+
+- name: Install Mono
+  apt:
+    name: mono-devel
+    state: present
+
+- name: Add Sonarr apt key
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: FDA5DFFC
+    state: present
+
+- name: Add Sonarr Repository
+  apt_repository:
+    repo: deb http://apt.sonarr.tv/ master main
+    state: present
+    update_cache: yes
+
+- name: Install Sonarr
+  apt:
+    name: nzbdrone
+    state: present
+  register:
+    nzbdrone
+
+- name: Create Sonarr init file
+  template:
+    src: nzbdrone_init.j2
+    dest: /etc/init.d/nzbdrone
+    owner: root
+    group: root
+    mode: 0755
+  notify: 
+    - restart nzbdrone
+
+- name: Set Sonarr to start on boot
+  when: nzbdrone.changed
+  shell: "{{ item }}"
+  with_items:
+    - update-rc.d nzbdrone defaults
+    - update-rc.d nzbdrone enable
+  notify:
+    - restart nzbdrone

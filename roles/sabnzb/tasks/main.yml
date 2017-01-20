@@ -1,0 +1,69 @@
+---
+# file: roles/sabnzb/tasks/main.yml
+
+- name: Add SABnzb Repository Key
+  apt_key:
+    keyserver: keyserver.ubuntu.com
+    id: 0X98703123E0F52B2BE16D586EF13930B14BB9F05F
+    state: present
+
+- name: Add SABnzb Repository
+  apt_repository:
+    repo: deb http://ppa.launchpad.net/jcfp/ppa/ubuntu xenial main
+    state: present
+    update_cache: yes
+
+- name: Install SABnzb Package
+  apt:
+    name: sabnzbdplus
+    state: present
+  register: sabnzbdplus
+  notify:
+    - restart sabnzbdplus
+
+- name: Create SABnzb Daemon Startup Config
+  when: sabnzbdplus.changed
+  template:
+    src: sabnzbdplus-daemon.j2
+    dest: /etc/default/sabnzbdplus
+    owner: root
+    group: root
+    mode: 0644
+  notify:
+    - restart sabnzbdplus
+
+- name: Create Downloads Folder
+  file:
+    path: "{{ item }}"
+    group: "{{ ms_user }}"
+    owner: "{{ ms_user }}"
+    mode: 0755
+    state: directory
+  with_items:
+    - "{{ sabnzb.dl_temp }}"
+    - "{{ sabnzb.dl_staged }}"
+    - "{{ sabnzb.dl_complete }}"
+
+- name: Make SABnzb Config Folder
+  file:
+    path: /home/{{ ms_user }}/.sabnzbd/{{ item }}
+    group: "{{ ms_user }}"
+    owner: "{{ ms_user }}"
+    mode: 0755
+    state: directory
+  with_items:
+    - admin
+    - logs
+
+- name: Create SABnzb Config
+  when: sabnzbdplus.changed
+  template:
+    src: sabnzbd.ini.j2
+    dest: /home/{{ ms_user }}/.sabnzbd/sabnzbd.ini
+    owner: "{{ ms_user }}"
+    group: "{{ ms_user }}"
+    mode: 0600
+  notify:
+    - restart sabnzbdplus
+
+

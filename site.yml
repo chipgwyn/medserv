@@ -1,0 +1,16 @@
+---
+# file: /site.yml 
+# Deploys the entire stack
+
+- name: Deploy Media Server
+  hosts: all
+  become: true
+  roles:
+    # - common
+    # - plex
+    # - sabnzb
+    # - sonarr
+    # - headphones
+    # - couchpotato
+    # - librenms
+    - netdata

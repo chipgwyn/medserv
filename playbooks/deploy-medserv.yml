@@ -1,0 +1,8 @@
+---
+# file playbooks/deploy-medserv.yml
+
+# - name: Deploy Media Server
+#   hosts: all
+#   become: true
+#   roles:
+#     - common
